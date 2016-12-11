@@ -25,12 +25,12 @@ library(GGally)
 ```
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ####### Set working directory
 setwd("~/Library/Mobile Documents/com~apple~CloudDocs/Udacity/P4_Explore_Sum")
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Load the Data
 WineData <- read.csv("wineQualityReds.csv",header=TRUE,sep=",")
 ```
@@ -39,7 +39,7 @@ WineData <- read.csv("wineQualityReds.csv",header=TRUE,sep=",")
 ## Reviewing and Summarizing Data
 A good first step is to review the data that we will be working with. First we should know the name of the factors contained in our data, the shape they are currently in and some basic summary statistics.
 
-```{r echo=TRUE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 names(WineData)
 str(WineData)
 summary(WineData)
@@ -54,7 +54,7 @@ Some initial observations here:
 - All other variables seem to be continuous quantities (w/ the exception of the `.sulfur.dioxide` suffixes).
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # quality
 summary(WineData$quality)
 table(WineData$quality)
@@ -68,7 +68,7 @@ str(WineData$quality)
 
 To first explore this data visually, I'll draw up quick histograms of all 12 variables to get a better idea as to the shape of our data. The intention here is to see a quick distribution of the values. Viewing histograms and boxplots together make it easier to see the affect of outliers on the distribution.
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # exploratory, quick histogram & boxplot plots
 plot_grid(qplot(WineData$fixed.acidity),
             qplot(factor(0),fixed.acidity,data=WineData,geom="boxplot", horizontal=TRUE)+coord_flip(),labels = "AUTO", ncol = 1)
@@ -117,14 +117,14 @@ Only a few of the factors appear to be normally distributed, density and pH. Fix
 ### Wine Quality
 Although wine quality has a discrete range of only 3-8, we can roughly see that there is some amount of normal distribution.  A large majority of the wines examined received ratings of 5 or 6, and very few received 3, 4, or 8.  
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ftable(WineData$quality)
 qplot(WineData$quality)
 ```
 
 Given the ratings and distribution of wine quality, I'll instantiate another categorical variable, classifying the wines as 'poor' (rating 0 to 4), 'average' (rating 5 or 6), and 'good' (rating 7 to 10).
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 WineData$rating <- ifelse(WineData$quality < 5, 'poor', ifelse(
   WineData$quality < 7, 'average', 'good'))
 WineData$rating <- ordered(WineData$rating,
@@ -132,7 +132,7 @@ WineData$rating <- ordered(WineData$rating,
 summary(WineData$rating)
 ```
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 qplot(WineData$rating)
 ```
 
@@ -162,7 +162,7 @@ ggplot(WineData,
 
 When plotted on a base 10 logarithmic scale, `fixed.acidity` and `volatile.acidity` appear to be normally-distributed.  This makes sense, considering that `pH` is normally distributed, and pH, by definition, is a measure of acidity and is on a logarithmic scale. However, `citric.acid`, did not appear to be normally-distributed on a logarithmic scale.  Upon further investigation:
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 length(subset(WineData, citric.acid == 0)$citric.acid)
 ```
 
@@ -180,7 +180,7 @@ I instantiated an ordered factor, `rating`, classifying each wine sample as 'poo
 
 Upon further examination of the data set documentation, it appears that `fixed.acidity` and `volatile.acidity` are different types of acids; tartaric acid and acetic acid. I decided to create a combined variable, `TAC.acidity`, containing the sum of tartaric, acetic, and citric acid.
 
-```{r echo=FALSE, message=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 WineData$TAC.acidity <- WineData$fixed.acidity + WineData$volatile.acidity + WineData$citric.acid
 qplot(WineData$TAC.acidity)
 ```
@@ -204,10 +204,10 @@ While we examined the distributions above using boxplots. Bivariate boxplots, wi
 To get a quick snapshot of how the variables affect quality, I generated box plots for each.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
+
 get_bivariate_boxplot <- function(x, y, ylab) {
   return(qplot(WineData, x = x, y = y, geom = 'boxplot', ylab = ylab))
 }
-
 grid.arrange(get_bivariate_boxplot(WineData$quality, WineData$fixed.acidity,
                                    'fixed acidity'),
              get_bivariate_boxplot(WineData$quality, WineData$volatile.acidity,
@@ -234,29 +234,35 @@ grid.arrange(get_bivariate_boxplot(WineData$quality, WineData$fixed.acidity,
                                    'alcohol'),
              ncol = 4)
 
-grid.arrange(get_bivariate_boxplot(WineData$rating, WineData$fixed.acidity,
+
+
+get_bivariate_boxplot_2 <- function(x, y, ylab) {
+  return(qplot(WineData, x = x, y = y, geom = 'boxplot', ylab = ylab) + scale_x_discrete(breaks=c("poor", "average", "good"),
+                      labels=c("P", "A", "G")))
+}
+grid.arrange(get_bivariate_boxplot_2(WineData$rating, WineData$fixed.acidity,
                                    'fixed acidity'),
-             get_bivariate_boxplot(WineData$rating, WineData$volatile.acidity,
+             get_bivariate_boxplot_2(WineData$rating, WineData$volatile.acidity,
                                    'volatile acidity'),
-             get_bivariate_boxplot(WineData$rating, WineData$citric.acid,
+             get_bivariate_boxplot_2(WineData$rating, WineData$citric.acid,
                                    'citric acid'),
-             get_bivariate_boxplot(WineData$rating, WineData$TAC.acidity,
+             get_bivariate_boxplot_2(WineData$rating, WineData$TAC.acidity,
                                    'TAC acidity'),
-             get_bivariate_boxplot(WineData$rating, log10(WineData$residual.sugar),
+             get_bivariate_boxplot_2(WineData$rating, log10(WineData$residual.sugar),
                                    'residual sugar'),
-             get_bivariate_boxplot(WineData$rating, log10(WineData$chlorides),
+             get_bivariate_boxplot_2(WineData$rating, log10(WineData$chlorides),
                                    'chlorides'),
-             get_bivariate_boxplot(WineData$rating, WineData$free.sulfur.dioxide,
+             get_bivariate_boxplot_2(WineData$rating, WineData$free.sulfur.dioxide,
                                    'free sulf. dioxide'),
-             get_bivariate_boxplot(WineData$rating, WineData$total.sulfur.dioxide,
+             get_bivariate_boxplot_2(WineData$rating, WineData$total.sulfur.dioxide,
                                    'total sulf. dioxide'),
-             get_bivariate_boxplot(WineData$rating, WineData$density,
+             get_bivariate_boxplot_2(WineData$rating, WineData$density,
                                    'density'),
-             get_bivariate_boxplot(WineData$rating, WineData$pH,
+             get_bivariate_boxplot_2(WineData$rating, WineData$pH,
                                    'pH'),
-             get_bivariate_boxplot(WineData$rating, log10(WineData$sulphates),
+             get_bivariate_boxplot_2(WineData$rating, log10(WineData$sulphates),
                                    'sulphates'),
-             get_bivariate_boxplot(WineData$rating, WineData$alcohol,
+             get_bivariate_boxplot_2(WineData$rating, WineData$alcohol,
                                    'alcohol'),
              ncol = 4)
 ```
@@ -273,7 +279,7 @@ Residual sugar and sulfur dioxides did not seem to have a dramatic impact on the
 
 By utilizing `cor.test`, I calculated the correlation for each of these variables against `quality`:
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 simple_cor_test <- function(x, y) {
   return(cor.test(x, as.numeric(y))$estimate)
 }
@@ -309,7 +315,7 @@ Quantitatively, it appears that the following variables have relatively higher c
 
 Lets see what other correlations that may exist through a scatterplot matrix.
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 
 pairs(~quality+alcohol+citric.acid+log10(sulphates)+fixed.acidity ,data=WineData,
       main="Scatterplot Matrix")
@@ -318,7 +324,7 @@ pairs(~quality+alcohol+citric.acid+log10(sulphates)+fixed.acidity ,data=WineData
 This scatterplot helps us to see that fixed.acidity and citric acid have a positive linear relationship. There may also be a positive relationship between citirc acid and log10(sulphates) as well.
 
 Let's create a vizulize to hlep us see these correlations in addition to scatterplot matrix for all variables too.
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggcorr(WineData)
 
 ```
@@ -327,7 +333,7 @@ While looking at a scatterplot of the varibvles above can provide us with an ind
 
 Examining the acidity variables, I saw strong correlations between them:
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(WineData, aes(x = fixed.acidity, y = citric.acid)) +
   geom_point()+
   theme_minimal()
@@ -347,7 +353,7 @@ cor.test(log10(WineData$TAC.acidity), WineData$pH)
 Most notably, base 10 logarithm `TAC.acidity` correlated very well with pH.  This is certainly expected, as pH is essentially a measure of acidity.  An interesting question to pose, using basic chemistry knowledge, is to ask what other components other than the measured acids are affecting pH.  We can quantify this difference by building a predictive linear model, to predict pH based off of `TAC.acidity` and capture the % difference as a new variable.
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 m <- lm(I(pH) ~ I(log10(TAC.acidity)), WineData)
 WineData$pH.predictions <- predict(m, WineData)
 # (observed - expected) / expected
@@ -382,7 +388,7 @@ It is clear that there is a very strong relationship between the two.  Aside fro
 
 Let's see how these variables compare, plotted against each other and faceted by wine `rating` to have a better look at the distribution from the scatterplot matrix:
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(WineData, aes(x = log10(sulphates), y = alcohol)) +
   facet_wrap(~rating) +
   geom_point() + 
@@ -516,7 +522,7 @@ grid.arrange(ggplot(WineData, aes(x = quality, y = fixed.acidity,color = quality
 These subplots were created to demonstrate the effect of acidity and pH on wine quality.  Generally, higher acidity (or lower pH) is seen in highly-rated wines.  To caveat this, a presence of volatile (acetic) acid negatively affected wine quality.  Citric acidity had a high correlation with wine quality, while fixed (tartaric) acid had a smaller impact.
 
 ## Plot 2: Effect of Alcohol on Wine Quality
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(WineData, aes(x = quality, y = alcohol,
                       color = rating)) +
   geom_boxplot() +
@@ -534,7 +540,7 @@ These boxplots demonstrate the effect of alcohol content on wine quality.  Gener
 ## Plot 3: Factors that impact wine quality?
 
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(subset(WineData, rating != 'average'), aes(x = alcohol, y = log10(sulphates), color = rating)) +
   geom_point() +
   geom_smooth(se = FALSE)+
